@@ -47,7 +47,7 @@ async function runAgentWorkflow() {
       await view.goTo({ center: point, zoom: 14 });
     }
 
-    alert(data.result);
+    //alert(data.result);
   } catch (err) {
     console.error("Error executing request:", err);
   }
