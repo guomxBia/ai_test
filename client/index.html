@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArcGIS + Google ADK Integration</title>
+    
+    <!-- ArcGIS Maps SDK for JavaScript CSS -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      #controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #ffffff;
+        padding: 16px;
+        z-index: 99;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        min-width: 220px;
+      }
+
+      #controls h3 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #333333;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      button {
+        width: 100%;
+        background-color: #007ac2;
+        color: white;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      button:hover {
+        background-color: #005e95;
+      }
+
+      button:active {
+        background-color: #00446e;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Container for ArcGIS MapView -->
+    <div id="viewDiv"></div>
+
+    <!-- UI Control Panel -->
+    <div id="controls">
+      <h3>GIS Agent Controls</h3>
+      <button id="runBtn">Locate PUMP-101</button>
+    </div>
+
+    <!-- Main Entry JavaScript File -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
