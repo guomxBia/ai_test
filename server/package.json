@@ -6,8 +6,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+
+    "start": "cross-env node index.js",
+    "dev": "cross-env node --watch index.js"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +16,11 @@
   "dependencies": {
     "@google/adk": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "better-sqlite3": "^13.0.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "cross-env": "^7.0.3"
   }
 }

@@ -1,0 +1,147 @@
+// routes.js
+import { Router } from "express";
+import { getRunner, getEnsureSession, getAppName } from "./agents/agentRegistry.js";
+import { getWells } from "./db/dbtables.js";
+import { arcgisHttpMcpClient } from "./clients/arcgisHttpMcpClient.js";
+import { arcgisStdioMcpClient } from "./clients/arcgisStdioMcpClient.js";
+
+const router = Router();
+
+router.post("/api/chat", async (req, res) => {
+  console.log(`[API Received]:`, req.body);
+  try {
+    const { prompt, userId = "gis-user", sessionId = "default-session" } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Missing 'prompt' in request body." });
+    }
+
+    const APP_NAME = await getAppName();
+    const ensureSession = await getEnsureSession();
+    const runner = await getRunner();
+
+    await ensureSession(APP_NAME, userId, sessionId);
+
+    const formattedMessage = {
+      role: "user",
+      parts: [{ text: prompt }],
+    };
+
+    const runStream = runner.runAgent
+      ? runner.runAgent({ userId, sessionId, newMessage: formattedMessage })
+      : runner.runAsync({ userId, sessionId, newMessage: formattedMessage });
+
+    let finalResponseText = "";
+    let selectedLocation = null;
+    let lastEvent = null;
+
+    for await (const event of runStream) {
+      lastEvent = event;
+      console.log("[ADK Event]:", JSON.stringify(event, null, 2));
+
+      if (event.content?.parts) {
+        for (const part of event.content.parts) {
+          if (part.text) {
+            finalResponseText += part.text;
+          }
+
+          // If ADK surfaces tool results as JSON text, try to parse firstLocation from it
+          if (!selectedLocation && part.text && part.text.trim().startsWith("{")) {
+            try {
+              const parsed = JSON.parse(part.text);
+              if (parsed.firstLocation) {
+                selectedLocation = parsed.firstLocation;
+              }
+            } catch {
+              // not JSON, ignore
+            }
+          }
+
+          // If ADK surfaces data separately
+          if (!selectedLocation && part.data && typeof part.data === "object") {
+            if (part.data.firstLocation) {
+              selectedLocation = part.data.firstLocation;
+            }
+          }
+        }
+      }
+    }
+
+    console.log(`[ADK Response]:`, finalResponseText);
+
+    const location =
+      selectedLocation || {
+        latitude: 34.0522,
+        longitude: -118.2437,
+        label: "PUMP-101",
+      };
+
+    res.json({
+      success: true,
+      result: finalResponseText || "[No text result]",
+      location,
+    });
+  } catch (err) {
+    console.error("[Agent Error]:", err);
+    res.status(500).json({ error: err.message || "Internal Server Error" });
+  }
+});
+
+// /api/loadwells unchanged
+router.get("/api/loadwells", (req, res) => {
+  try {
+    const wells = getWells();
+    res.json({ success: true, wells });
+  } catch (err) {
+    console.error("[LoadWells Error]:", err);
+    res.status(500).json({ error: err.message || "Internal Server Error" });
+  }
+});
+
+router.get("/api/test-powerplants", async (req, res) => {
+  try {
+    const client = new arcgisHttpMcpClient();
+    const response = await client.queryPowerPlants({
+      state: "Michigan",
+      maxFeatures: 5,
+    });
+    res.json(response); // { where, count, features }
+  } catch (err) {
+    console.error("[Test PowerPlants Error]:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/api/test-powerplants-stdio", async (req, res) => {
+  const client = new arcgisStdioMcpClient();
+  try {
+    // Call MCP tool directly via stdio client
+    const response = await client.callTool("query_power_plants_us_eia", {
+      state: "MI",
+      maxFeatures: 5,
+    });
+
+    // response.result.content[...] will contain the JSON string from stdio-mcp-server.js
+    const content = response.content || response.result?.content || [];
+    let parsed = null;
+    for (const part of content) {
+      if (part.type === "text" && part.text) {
+        try {
+          parsed = JSON.parse(part.text);
+          break;
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+
+    res.json(parsed || { raw: response });
+  } catch (err) {
+    console.error("[Test PowerPlants Stdio Error]:", err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.close();
+  }
+});
+
+export default router;

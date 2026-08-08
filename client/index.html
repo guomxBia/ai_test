@@ -4,44 +4,123 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ArcGIS + Google ADK Integration</title>
-    
+
     <!-- ArcGIS Maps SDK for JavaScript CSS -->
-    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.30/esri/themes/light/main.css"
+    />
 
     <style>
       html,
-      body,
-      #viewDiv {
+      body {
         padding: 0;
         margin: 0;
         height: 100%;
         width: 100%;
         overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
       }
 
-      #controls {
+      #appRoot {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      /* Left: map */
+      #mapContainer {
+        flex: 1 1 auto;
+        min-width: 200px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Draggable divider between map and chat */
+      #resizer {
+        flex: 0 0 6px;
+        width: 6px;
+        cursor: col-resize;
+        background: #d9d9d9;
+        position: relative;
+        z-index: 10;
+        transition: background-color 0.15s ease;
+      }
+
+      #resizer:hover,
+      #resizer.dragging {
+        background: #007ac2;
+      }
+
+      /* small visual grip in the middle of the resizer */
+      #resizer::after {
+        content: "";
         position: absolute;
-        top: 20px;
-        right: 20px;
-        background: #ffffff;
-        padding: 16px;
-        z-index: 99;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        min-width: 220px;
+        top: 50%;
+        left: 50%;
+        width: 2px;
+        height: 40px;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 2px;
       }
 
-      #controls h3 {
+      /* Right: chat panel */
+      #chatPanel {
+        flex: 0 0 auto;
+        width: 40%;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+        background: #ffffff;
+        box-sizing: border-box;
+        overflow: auto;
+      }
+
+      #chatPanel h3 {
         margin: 0 0 10px 0;
-        font-size: 14px;
+        font-size: 16px;
         color: #333333;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        flex: 0 0 auto;
+      }
+
+      #chatInput {
+        width: 100%;
+        resize: vertical;
+        min-height: 80px;
+        padding: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+        flex: 0 0 auto;
+        font-family: inherit;
+      }
+
+      #chatOutput {
+        width: 100%;
+        resize: vertical;
+        min-height: 160px;
+        padding: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+        margin-top: 8px;
+        flex: 1 1 auto;
+        font-family: inherit;
+      }
+
+      #chatButtons {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+        flex: 0 0 auto;
       }
 
       button {
-        width: 100%;
         background-color: #007ac2;
         color: white;
         border: none;
@@ -60,17 +139,146 @@
       button:active {
         background-color: #00446e;
       }
+
+      /* prevent text selection while dragging the resizer */
+      body.resizing {
+        user-select: none;
+        cursor: col-resize;
+      }
+
+      body.resizing #mapContainer,
+      body.resizing #chatPanel {
+        pointer-events: none;
+      }
+
     </style>
   </head>
   <body>
-    <!-- Container for ArcGIS MapView -->
-    <div id="viewDiv"></div>
+    <div id="appRoot">
+      <!-- Left side: ArcGIS Map -->
+      <div id="mapContainer"></div>
 
-    <!-- UI Control Panel -->
-    <div id="controls">
-      <h3>GIS Agent Controls</h3>
-      <button id="runBtn">Locate PUMP-101</button>
+      <!-- Draggable divider -->
+      <div id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize panels" tabindex="0"></div>
+
+      <!-- Right side: Chat window -->
+      <div id="chatPanel">
+        <h3>GIS Agent Chat</h3>
+        <textarea
+          id="chatInput"
+          placeholder="Ask a question, e.g. 'Where is SAP asset PUMP-101 located and what is its status?'"
+        ></textarea>
+
+        <div id="chatButtons">
+          <button id="chatSendBtn">Send</button>
+          <button id="chatClearBtn">Clear</button>
+        </div>
+
+        <textarea
+          id="chatOutput"
+          readonly
+          placeholder="AI responses will appear here..."
+        ></textarea>
+      </div>
     </div>
+
+    <script>
+      (function () {
+        const appRoot = document.getElementById("appRoot");
+        const mapContainer = document.getElementById("mapContainer");
+        const chatPanel = document.getElementById("chatPanel");
+        const resizer = document.getElementById("resizer");
+
+        const MIN_MAP_WIDTH = 200;
+        const MIN_CHAT_WIDTH = 260;
+
+        let isDragging = false;
+
+        function clamp(value, min, max) {
+          return Math.max(min, Math.min(max, value));
+        }
+
+        function setChatWidthPx(px) {
+          const rootWidth = appRoot.getBoundingClientRect().width;
+          const resizerWidth = resizer.getBoundingClientRect().width;
+          const maxChatWidth = rootWidth - resizerWidth - MIN_MAP_WIDTH;
+          const clamped = clamp(px, MIN_CHAT_WIDTH, Math.max(MIN_CHAT_WIDTH, maxChatWidth));
+          chatPanel.style.width = clamped + "px";
+        }
+
+        function startDrag(clientX) {
+          isDragging = true;
+          resizer.classList.add("dragging");
+          document.body.classList.add("resizing");
+        }
+
+        function stopDrag() {
+          if (!isDragging) return;
+          isDragging = false;
+          resizer.classList.remove("dragging");
+          document.body.classList.remove("resizing");
+        }
+
+        function onDrag(clientX) {
+          if (!isDragging) return;
+          const rootRect = appRoot.getBoundingClientRect();
+          const newChatWidth = rootRect.right - clientX - resizer.getBoundingClientRect().width;
+          setChatWidthPx(newChatWidth);
+        }
+
+        // Mouse events
+        resizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          startDrag(e.clientX);
+        });
+        window.addEventListener("mousemove", (e) => onDrag(e.clientX));
+        window.addEventListener("mouseup", stopDrag);
+
+        // Touch events (mobile / tablet support)
+        resizer.addEventListener(
+          "touchstart",
+          (e) => {
+            startDrag(e.touches[0].clientX);
+          },
+          { passive: true }
+        );
+        window.addEventListener(
+          "touchmove",
+          (e) => {
+            if (!isDragging) return;
+            onDrag(e.touches[0].clientX);
+          },
+          { passive: true }
+        );
+        window.addEventListener("touchend", stopDrag);
+
+        // Keyboard accessibility: arrow keys nudge the divider
+        resizer.addEventListener("keydown", (e) => {
+          const step = 20;
+          const currentWidth = chatPanel.getBoundingClientRect().width;
+          if (e.key === "ArrowLeft") {
+            setChatWidthPx(currentWidth + step);
+            e.preventDefault();
+          } else if (e.key === "ArrowRight") {
+            setChatWidthPx(currentWidth - step);
+            e.preventDefault();
+          }
+        });
+
+        // Keep proportions sane if the browser window itself is resized
+        window.addEventListener("resize", () => {
+          const currentWidth = chatPanel.getBoundingClientRect().width;
+          setChatWidthPx(currentWidth);
+        });
+
+        // Initialize at 40% of the window on load
+        window.addEventListener("load", () => {
+          setChatWidthPx(appRoot.getBoundingClientRect().width * 0.4);
+        });
+        // Also run immediately in case 'load' already fired
+        setChatWidthPx(appRoot.getBoundingClientRect().width * 0.4);
+      })();
+    </script>
 
     <!-- Main Entry JavaScript File -->
     <script type="module" src="/src/main.js"></script>
