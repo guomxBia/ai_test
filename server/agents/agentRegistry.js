@@ -14,9 +14,9 @@ async function loadActive() {
       console.log("[AgentRegistry] Loading arcgisHttpAgent (HTTP/SSE transport)...");
       cached = await import("./arcgisHttpAgent.js");
       break;
-    case "arcgis-stdio":
-      console.log("[AgentRegistry] Loading arcgisStdioAgent (stdio child-process transport)...");
-      cached = await import("./arcgisStdioAgent.js");
+    case "local-tools":
+      console.log("[AgentRegistry] Loading localToolsAgent (local stdio transport)...");
+      cached = await import("./localToolsAgent.js");
       break;
     case "mock":
     default:

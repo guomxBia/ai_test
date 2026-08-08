@@ -1,17 +1,23 @@
-// arcgisStdioMcpClient.js
-//C:\Users\Mingxin.Guo\Projects\test\adk\server\clients\arcgisStdioMcpClient.js
+// localToolsMcpClient.js
+// C:\Users\Mingxin.Guo\Projects\test\adk\server\clients\localToolsMcpClient.js
+//
+// Stdio transport client for the local-only MCP server (stdio-mcp-server.js).
+// Spawns that server as a child process and talks JSON-RPC over stdin/stdout.
+// This is intentionally local-machine-only — no network hop, no remote
+// service. Compare with arcgisHttpMcpClient.js, which talks to a remote
+// ArcGIS service over SSE.
+
 import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Compute __filename and __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export class arcgisStdioMcpClient {
+export class localToolsMcpClient {
   constructor(
     command = "node",
-    // Adjust the relative path to where your MCP server file actually lives
+    // Path to the local-only stdio MCP server.
     args = [path.join(__dirname, "..", "stdio_mcp", "stdio-mcp-server.js")]
   ) {
     this.proc = spawn(command, args, {
@@ -30,26 +36,26 @@ export class arcgisStdioMcpClient {
             this.pending.delete(msg.id);
             resolve(msg);
           } else {
-            console.log("[MCP] Unmatched message:", msg);
+            console.log("[LocalToolsMcpClient] Unmatched message:", msg);
           }
         } catch (err) {
-          console.error("[MCP] Failed to parse:", err, line);
+          console.error("[LocalToolsMcpClient] Failed to parse:", err, line);
         }
       }
     });
 
     this.proc.stderr.on("data", (data) => {
-      console.error("[MCP Server]", data.toString());
+      console.error("[Local Tools MCP Server]", data.toString());
     });
 
     this.proc.on("close", (code) => {
-      console.log(`[MCP Server] exited with code ${code}`);
+      console.log(`[Local Tools MCP Server] exited with code ${code}`);
     });
+
     this.proc.on("error", (err) => {
-     console.error("[MCP Stdio Client] Failed to spawn:", err);
+      console.error("[LocalToolsMcpClient] Failed to spawn:", err);
     });
   }
-  
 
   sendRequest(method, params = {}) {
     const id = this.nextId++;

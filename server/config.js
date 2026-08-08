@@ -1,4 +1,4 @@
-export const ACTIVE_CLIENT = "arcgis-stdio"; //process.env.GIS_CLIENT ?? "mock"; //"mock", "arcgis-http", "arcgis-stdio"
+export const ACTIVE_CLIENT = "local-tools"; // "mock", "arcgis-http", "arcgis-stdio", "local-tools"
 //export const ACTIVE_CLIENT = "arcgis-stdio";
 export const HTTP_MCP_BASE_URL= "http://localhost:6060"
 export const PORT = 8080; //process.env.PORT || 8080;

@@ -1,0 +1,8 @@
+4. Test prompts to try once wired up:
+
+"What files are in the local folder?"
+"Read notes.txt"
+"What time is it on the server?"
+"Show me the local wells"
+
+Find power plants in Michigan

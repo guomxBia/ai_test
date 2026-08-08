@@ -3,7 +3,7 @@ import { Router } from "express";
 import { getRunner, getEnsureSession, getAppName } from "./agents/agentRegistry.js";
 import { getWells } from "./db/dbtables.js";
 import { arcgisHttpMcpClient } from "./clients/arcgisHttpMcpClient.js";
-import { arcgisStdioMcpClient } from "./clients/arcgisStdioMcpClient.js";
+import { localToolsMcpClient } from "./clients/localToolsMcpClient.js";
 
 const router = Router();
 
@@ -63,6 +63,13 @@ router.post("/api/chat", async (req, res) => {
               selectedLocation = part.data.firstLocation;
             }
           }
+
+          // If ADK surfaces the tool result as a functionResponse event
+          // (this is the actual shape our tools return it in), pull
+          // firstLocation from part.functionResponse.response.firstLocation
+          if (!selectedLocation && part.functionResponse?.response?.firstLocation) {
+            selectedLocation = part.functionResponse.response.firstLocation;
+          }
         }
       }
     }
@@ -112,16 +119,14 @@ router.get("/api/test-powerplants", async (req, res) => {
   }
 });
 
-router.get("/api/test-powerplants-stdio", async (req, res) => {
-  const client = new arcgisStdioMcpClient();
+// Test route for the local-only stdio MCP server (local_data files, local wells DB).
+router.get("/api/test-local-wells", async (req, res) => {
+  const client = new localToolsMcpClient();
   try {
-    // Call MCP tool directly via stdio client
-    const response = await client.callTool("query_power_plants_us_eia", {
-      state: "MI",
-      maxFeatures: 5,
+    const response = await client.callTool("query_local_wells", {
+      limit: Number(req.query.limit) || 10,
     });
 
-    // response.result.content[...] will contain the JSON string from stdio-mcp-server.js
     const content = response.content || response.result?.content || [];
     let parsed = null;
     for (const part of content) {
@@ -137,7 +142,35 @@ router.get("/api/test-powerplants-stdio", async (req, res) => {
 
     res.json(parsed || { raw: response });
   } catch (err) {
-    console.error("[Test PowerPlants Stdio Error]:", err);
+    console.error("[Test Local Wells Error]:", err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.close();
+  }
+});
+
+// Test route for listing files in the local sandbox folder (local_data/).
+router.get("/api/test-local-files", async (req, res) => {
+  const client = new localToolsMcpClient();
+  try {
+    const response = await client.callTool("list_local_directory", {});
+
+    const content = response.content || response.result?.content || [];
+    let parsed = null;
+    for (const part of content) {
+      if (part.type === "text" && part.text) {
+        try {
+          parsed = JSON.parse(part.text);
+          break;
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+
+    res.json(parsed || { raw: response });
+  } catch (err) {
+    console.error("[Test Local Files Error]:", err);
     res.status(500).json({ error: err.message });
   } finally {
     client.close();
