@@ -1,10 +1,9 @@
-// localToolsMcpClient.js
-// C:\Users\Mingxin.Guo\Projects\test\adk\server\clients\localToolsMcpClient.js
+// C:\Users\Mingxin.Guo\Projects\test\adk\server\clients\localToolsSpawnMcpClient.js
 //
 // Stdio transport client for the local-only MCP server (stdio-mcp-server.js).
 // Spawns that server as a child process and talks JSON-RPC over stdin/stdout.
 // This is intentionally local-machine-only — no network hop, no remote
-// service. Compare with arcgisHttpMcpClient.js, which talks to a remote
+// service. Compare with FederalGisHttpMcpClient.js, which talks to a remote
 // ArcGIS service over SSE.
 
 import { spawn } from "child_process";
@@ -14,7 +13,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export class localToolsMcpClient {
+export class localToolsSpawnMcpClient {
   constructor(
     command = "node",
     // Path to the local-only stdio MCP server.
@@ -36,10 +35,10 @@ export class localToolsMcpClient {
             this.pending.delete(msg.id);
             resolve(msg);
           } else {
-            console.log("[LocalToolsMcpClient] Unmatched message:", msg);
+            console.log("[localToolsSpawnMcpClient] Unmatched message:", msg);
           }
         } catch (err) {
-          console.error("[LocalToolsMcpClient] Failed to parse:", err, line);
+          console.error("[localToolsSpawnMcpClient] Failed to parse:", err, line);
         }
       }
     });
@@ -53,7 +52,7 @@ export class localToolsMcpClient {
     });
 
     this.proc.on("error", (err) => {
-      console.error("[LocalToolsMcpClient] Failed to spawn:", err);
+      console.error("[localToolsSpawnMcpClient] Failed to spawn:", err);
     });
   }
 

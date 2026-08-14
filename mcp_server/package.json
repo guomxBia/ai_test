@@ -3,19 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "arcgis-mcp-server.js",
+  "main": "http-mcp-server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node http-mcp-server.js"
+    "dev": "node --watch http-mcp-server.js",
+    "start": "node http-mcp-server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.21.0",
-    "cheerio": "^1.1.2",
-    "eventsource": "^4.1.1",
-    "express": "^5.1.0",
-    "node-fetch": "^3.3.2"
+    "express": "^5.1.0"
   }
 }

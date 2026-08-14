@@ -5,4 +5,8 @@
 "What time is it on the server?"
 "Show me the local wells"
 
-Find power plants in Michigan
+Test prompts once wired up
+
+"Find power plants in Michigan" → routes to query_power_plants_us_eia (remote)
+"Show me the local wells" → routes to query_local_wells (local)
+"What time is it on the server?" → routes to get_server_time (local)

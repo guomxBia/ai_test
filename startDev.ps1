@@ -1,6 +1,6 @@
 # startDev.ps1 - Open tabs in current Windows Terminal
 
-$BaseProjectPath = "C:\Users\Mingxin.Guo\Projects\test\adk"
+$BaseProjectPath = "C:\Users\Mingxin.Guo\Projects\test\ai_test"
 
 # Check if running in Windows Terminal
 if ($env:WT_SESSION) {

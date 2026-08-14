@@ -1,14 +1,15 @@
+//mcp_server\http-mcp-server.js
 import express from "express";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { registerArcgisMcpHandlers } from "./arcgis/arcgisMcpRegister.js";
+import { registerArcgisMcpHandlers } from "./arcgis/federalLayersRegister.js";
 import { PORT } from "./config.js";
 
 const app = express();
 app.use(express.json());
 
 const mcpServer = new Server(
-  { name: "arcgis-http-mcp-server", version: "1.0.0" },
+  { name: "federal-gis-mcp-server", version: "1.0.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -43,7 +44,7 @@ app.post("/messages", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`=======================================================`);
-  console.log(`🚀 ArcGIS Feature HTTP/SSE MCP Server running on port ${PORT}`);
+  console.log(`🚀 Federal GIS Data MCP Server running on port ${PORT}`);
   console.log(`   SSE Endpoint:      http://localhost:${PORT}/sse`);
   console.log(`   Message Endpoint:  http://localhost:${PORT}/messages`);
   console.log(`=======================================================`);

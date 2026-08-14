@@ -14,9 +14,9 @@ import {
   Runner,
   InMemorySessionService,
 } from "@google/adk";
-import { localToolsMcpClient } from "../clients/localToolsMcpClient.js";
+import { LocalToolsStdioMcpClient } from "../clients/LocalToolsStdioMcpClient.js";
 
-const localMcp = new localToolsMcpClient();
+const localMcp = new LocalToolsStdioMcpClient();
 
 process.once("SIGTERM", () => localMcp.close());
 process.once("SIGINT", () => localMcp.close());

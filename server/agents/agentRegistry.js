@@ -18,6 +18,10 @@ async function loadActive() {
       console.log("[AgentRegistry] Loading localToolsAgent (local stdio transport)...");
       cached = await import("./localToolsAgent.js");
       break;
+    case "combined":
+      console.log("[AgentRegistry] Loading combinedAgent (HTTP/SSE + stdio)...");
+      cached = await import("./combinedAgent.js");
+      break;
     case "mock":
     default:
       console.log("[AgentRegistry] Loading sapMockAgent (mock, no external MCP)...");

@@ -1,14 +1,15 @@
+//mcp_server\tests\FederalGisHttpMcpClient.js
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { PORT } from "../config.js";
 
 const DEFAULT_BASE_URL = `http://localhost:${PORT}`;
 
-export class ArcgisHttpMcpClient {
+export class FederalGisHttpMcpClient {
   constructor(baseUrl = DEFAULT_BASE_URL) {
     this.baseUrl = baseUrl;
     this.client = new Client(
-      { name: "gis-mcp-client", version: "1.0.0" },
+      { name: "federal-gis-mcp-client", version: "1.0.0" },
       { capabilities: {} }
     );
     this.connected = false;

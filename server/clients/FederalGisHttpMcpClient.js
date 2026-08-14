@@ -1,13 +1,13 @@
-// arcgisHttpMcpClient.js
+//server\clients\FederalGisHttpMcpClient.js
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { HTTP_MCP_BASE_URL } from "../config.js";
 
-export class arcgisHttpMcpClient {
+export class FederalGisHttpMcpClient {
   constructor(baseUrl = HTTP_MCP_BASE_URL) {
     this.baseUrl = baseUrl;
     this.client = new Client(
-      { name: "gis-mcp-client", version: "1.0.0" },
+      { name: "federal-gis-mcp-client", version: "1.0.0" },
       { capabilities: {} }
     );
     this.connected = false;
@@ -61,7 +61,9 @@ export class arcgisHttpMcpClient {
   }
 
   async queryBiaOffices({ agencyNameLike, regionLike, maxFeatures }) {
-    const response = await this.callTool("query_bia_offices", {
+    // NOTE: tool name fixed to match server registration
+    // (was "query_bia_offices" — server registers "query_bia_agency_offices")
+    const response = await this.callTool("query_bia_agency_offices", {
       agencyNameLike,
       regionLike,
       maxFeatures,

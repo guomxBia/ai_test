@@ -6,23 +6,20 @@ import {
   Runner,
   InMemorySessionService,
 } from "@google/adk";
-import { arcgisHttpMcpClient } from "../clients/arcgisHttpMcpClient.js";
+import { FederalGisHttpMcpClient } from "../clients/FederalGisHttpMcpClient.js";
 
-const arcgisHttp = new arcgisHttpMcpClient();
+const arcgisHttp = new FederalGisHttpMcpClient();
 
 const queryPowerPlantsTool = new FunctionTool({
   name: "query_power_plants_us_eia",
-  description:
-    "Query power plants from the EIA feature layer via the ArcGIS HTTP server.",
+  description:"Query power plants from the EIA feature layer via the ArcGIS HTTP server.",
   parameters: z.object({
     state: z.string().optional().describe("State name or abbreviation, e.g. 'Michigan' or 'CO'."),
     plantNameLike: z.string().optional().describe("Optional partial plant name filter."),
     maxFeatures: z.number().optional().describe("Maximum number of records to return."),
   }),
   execute: async ({ state, plantNameLike, maxFeatures }) => {
-    console.log(
-      `[ArcgisClient Tool] query_power_plants_us_eia via HTTP with state=${state}, plantNameLike=${plantNameLike}, maxFeatures=${maxFeatures}`
-    );
+    console.log(`[ArcgisClient Tool] query_power_plants_us_eia via HTTP with state=${state}, plantNameLike=${plantNameLike}, maxFeatures=${maxFeatures}`);
 
     let data;
     try {
@@ -50,10 +47,7 @@ const queryPowerPlantsTool = new FunctionTool({
       [
         state ? `state=${state}` : null,
         plantNameLike ? `plantNameLike=${plantNameLike}` : null,
-      ]
-        .filter(Boolean)
-        .join(", ") ||
-      "the U.S.";
+      ].filter(Boolean).join(", ") || "the U.S.";
 
     if (!features || !Array.isArray(features) || features.length === 0) {
       return {
@@ -78,12 +72,10 @@ const queryPowerPlantsTool = new FunctionTool({
         `${p.index}. ${p.name} (fuel: ${p.fuel}) at (${p.latitude?.toFixed?.(4)}, ${p.longitude?.toFixed?.(4)})`
     );
 
-    const summary =
-      `Found ${plants.length} power plants for ${whereDescription}:\n` + lines.join("\n");
+    const summary =`Found ${plants.length} power plants for ${whereDescription}:\n` + lines.join("\n");
 
     const first = plants[0];
-    const firstLocation =
-      first && first.latitude != null && first.longitude != null
+    const firstLocation = first && first.latitude != null && first.longitude != null
         ? {
             latitude: first.latitude,
             longitude: first.longitude,

@@ -1,7 +1,8 @@
-import { ArcgisHttpMcpClient } from "./arcgisHttpMcpClient.js";
+//mcp_server\tests\mcp-smoke-test.js
+import { FederalGisHttpMcpClient } from "./FederalGisHttpMcpClient.js";
 
 async function main() {
-  const client = new ArcgisHttpMcpClient();
+  const client = new FederalGisHttpMcpClient();
 
   try {
     console.log("Listing tools from HTTP MCP server...");
@@ -35,6 +36,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[gis-mcp-client Error]:", err);
+  console.error("[mcp-smoke-test Error]:", err);
   process.exit(1);
 });

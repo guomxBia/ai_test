@@ -1,0 +1,34 @@
+name: App Level
+version: 1.0.0
+schema: v1
+
+models:
+  # 1A. Main Model (for Chat, Edit, and Agent Mode)
+  - name: Autodetect
+    provider: ollama
+    model: AUTODETECT
+
+agents:
+  - path: agents/multiModelAgent.yaml
+  - path: agents/geminiAgent.yaml
+
+docs:
+  - name: ArcGIS JS API
+    startUrl: https://developers.arcgis.com/javascript/latest/
+
+mcpServers:
+  # Local stdio MCP server — local_data/ files + local SQLite wells DB.
+  # Same folder as this yaml file (/stdio_mcp), so a relative path works.
+  - name: local-gis-tools
+    command: node
+    args:
+      - ./stdio-mcp-server.js
+
+  # Remote HTTP/SSE MCP server — ArcGIS feature layers
+  # (power plants, NPS parks, BIA offices). Runs on HTTP_MCP_BASE_URL
+  # from mcp_server/config.js (default http://localhost:6060).
+  # NOTE: must be started separately (npm run start / dev in mcp_server/)
+  # before Continue connects — this entry does not launch it.
+  - name: federal-gis-http
+    type: sse
+    url: http://localhost:6060/sse

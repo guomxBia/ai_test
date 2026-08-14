@@ -7,8 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
 
-    "start": "cross-env node index.js",
-    "dev": "cross-env node --watch index.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
   "keywords": [],
   "author": "",
@@ -20,7 +20,6 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "zod": "^4.4.3",
-    "cross-env": "^7.0.3"
+    "zod": "^4.4.3"
   }
 }

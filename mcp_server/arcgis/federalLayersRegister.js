@@ -1,4 +1,4 @@
-//C:\Users\Mingxin.Guo\Projects\test\adk\mcp_server\arcgis\arcgisMcpRegister.js
+//mcp_server\arcgis\arcgisMcpRegister.js
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -7,7 +7,7 @@ import {
   ARCGIS_MCP_TOOLS,
   executeArcgisMcpTool,
   formatArcgisToolResult,
-} from "./arcgisTools.js";
+} from "./federalLayerTools.js";
 
 /** Register ListTools / CallTool handlers shared by stdio and HTTP MCP servers. */
 export function registerArcgisMcpHandlers(server) {

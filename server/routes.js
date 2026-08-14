@@ -2,8 +2,8 @@
 import { Router } from "express";
 import { getRunner, getEnsureSession, getAppName } from "./agents/agentRegistry.js";
 import { getWells } from "./db/dbtables.js";
-import { arcgisHttpMcpClient } from "./clients/arcgisHttpMcpClient.js";
-import { localToolsMcpClient } from "./clients/localToolsMcpClient.js";
+import { FederalGisHttpMcpClient } from "./clients/FederalGisHttpMcpClient.js";
+import { localToolsClient } from "./clients/localToolsClient.js";
 
 const router = Router();
 
@@ -107,7 +107,7 @@ router.get("/api/loadwells", (req, res) => {
 
 router.get("/api/test-powerplants", async (req, res) => {
   try {
-    const client = new arcgisHttpMcpClient();
+    const client = new FederalGisHttpMcpClient();
     const response = await client.queryPowerPlants({
       state: "Michigan",
       maxFeatures: 5,
@@ -121,59 +121,71 @@ router.get("/api/test-powerplants", async (req, res) => {
 
 // Test route for the local-only stdio MCP server (local_data files, local wells DB).
 router.get("/api/test-local-wells", async (req, res) => {
-  const client = new localToolsMcpClient();
   try {
-    const response = await client.callTool("query_local_wells", {
-      limit: Number(req.query.limit) || 10,
+    const rawLimit = Number.parseInt(req.query.limit, 10);
+
+    // Keep the route input aligned with your MCP server's 1–100 validation.
+    const limit =
+      Number.isInteger(rawLimit) && rawLimit >= 1 && rawLimit <= 100
+        ? rawLimit
+        : 10;
+
+    const response = await localToolsClient.callTool("query_local_wells", {
+      limit,
     });
 
-    const content = response.content || response.result?.content || [];
+    const content = response.content ?? response.result?.content ?? [];
     let parsed = null;
+
     for (const part of content) {
       if (part.type === "text" && part.text) {
         try {
           parsed = JSON.parse(part.text);
           break;
         } catch {
-          // ignore parse errors
+          // The tool may return plain text instead of JSON.
         }
       }
     }
 
-    res.json(parsed || { raw: response });
+    return res.json(parsed ?? { raw: response });
   } catch (err) {
     console.error("[Test Local Wells Error]:", err);
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.close();
+
+    return res.status(500).json({
+      error: err instanceof Error ? err.message : "Internal Server Error",
+    });
   }
 });
 
-// Test route for listing files in the local sandbox folder (local_data/).
 router.get("/api/test-local-files", async (req, res) => {
-  const client = new localToolsMcpClient();
   try {
-    const response = await client.callTool("list_local_directory", {});
+    const response = await localToolsClient.callTool(
+      "list_local_directory",
+      {}
+    );
 
-    const content = response.content || response.result?.content || [];
+    const content = response.content ?? response.result?.content ?? [];
     let parsed = null;
+
     for (const part of content) {
       if (part.type === "text" && part.text) {
         try {
           parsed = JSON.parse(part.text);
           break;
         } catch {
-          // ignore parse errors
+          // The tool may return plain text instead of JSON.
         }
       }
     }
 
-    res.json(parsed || { raw: response });
+    return res.json(parsed ?? { raw: response });
   } catch (err) {
     console.error("[Test Local Files Error]:", err);
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.close();
+
+    return res.status(500).json({
+      error: err instanceof Error ? err.message : "Internal Server Error",
+    });
   }
 });
 
