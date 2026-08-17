@@ -1,6 +1,6 @@
 // C:\Users\Mingxin.Guo\Projects\test\adk\server\clients\localToolsSpawnMcpClient.js
 //
-// Stdio transport client for the local-only MCP server (stdio-mcp-server.js).
+// Stdio transport client for the local-only MCP server (server.js).
 // Spawns that server as a child process and talks JSON-RPC over stdin/stdout.
 // This is intentionally local-machine-only — no network hop, no remote
 // service. Compare with FederalGisHttpMcpClient.js, which talks to a remote
@@ -17,7 +17,7 @@ export class localToolsSpawnMcpClient {
   constructor(
     command = "node",
     // Path to the local-only stdio MCP server.
-    args = [path.join(__dirname, "..", "stdio_mcp", "stdio-mcp-server.js")]
+    args = [path.join(__dirname, "..", "stdio_mcp", "server.js")]
   ) {
     this.proc = spawn(command, args, {
       stdio: ["pipe", "pipe", "pipe"],

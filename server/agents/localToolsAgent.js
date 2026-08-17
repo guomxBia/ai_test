@@ -1,7 +1,7 @@
 // localToolsAgent.js
 // C:\Users\Mingxin.Guo\Projects\test\adk\server\agents\localToolsAgent.js
 //
-// Agent for the local-only MCP server (stdio-mcp-server.js). Demonstrates
+// Agent for the local-only MCP server (server.js). Demonstrates
 // tools that only make sense on the machine actually running the server:
 // reading a local file, listing a local folder, checking server time, and
 // querying the local SQLite wells database. For remote GIS data (ArcGIS

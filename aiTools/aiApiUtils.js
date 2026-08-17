@@ -26,7 +26,7 @@ const geminiAxiosInstance = axios.create({
 });
 
 // --- DETERMINISTIC URL BUILDER ---
-const executeMcpTool = (toolName, args) => {
+const executeToolCall = (toolName, args) => {
     // 1. Niogems Wells API
     if (toolName === 'query_niogems_wells') {
         const page = args.page || 1;
@@ -98,7 +98,7 @@ export const ollamaAIcallFromBrowser = async (prompt, model, systemPrompt, name)
 };
 
 // --- GEMINI UTILITY (Function Calling / Tool-Based) ---
-export const geminiAIcallFromBrowserByMcpTool = async (prompt, model, tools = []) => {
+export const geminiAIcallFromBrowserByToolCall = async (prompt, model, tools = []) => {
     const requestPayload = {
         model: model,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -114,7 +114,7 @@ export const geminiAIcallFromBrowserByMcpTool = async (prompt, model, tools = []
         if (part?.functionCall) {
             const { name, args } = part.functionCall;
             console.log(`🎯 Gemini triggered Tool [${name}] with args:`, args);
-            return executeMcpTool(name, args);
+            return executeToolCall(name, args);
         }
 
         // Fallback if Gemini responded with plain text

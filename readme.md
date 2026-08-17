@@ -133,7 +133,7 @@ The smoke test connects, lists the remote tools, and calls `query_power_plants_u
 
 ## Local Stdio MCP Server
 
-`server/stdio_mcp/stdio-mcp-server.js` is a local-only MCP server. The backend starts it as a child process through the official MCP SDK’s `StdioClientTransport`.
+`server/stdio_mcp/server.js` is a local-only MCP server. The backend starts it as a child process through the official MCP SDK’s `StdioClientTransport`.
 
 There is no HTTP endpoint and no network hop for this server. It communicates with the backend through JSON-RPC over the child process’s stdin/stdout.
 
@@ -321,7 +321,7 @@ npm run dev
 
 The backend normally runs at `http://localhost:8080`.
 
-When local tools are used, the backend starts `server/stdio_mcp/stdio-mcp-server.js` automatically through the shared local stdio client. Do not manually start the local stdio server for normal backend use.
+When local tools are used, the backend starts `server/stdio_mcp/server.js` automatically through the shared local stdio client. Do not manually start the local stdio server for normal backend use.
 
 ### 3. Start the frontend
 
@@ -375,7 +375,7 @@ From the repository root:
 - `mcp_server/package.json`
   - `npm run dev` uses `node --watch http-mcp-server.js`
   - `npm start` uses `node http-mcp-server.js`
-- Do not write normal logs to stdout in `stdio-mcp-server.js`; stdout carries MCP protocol messages.
+- Do not write normal logs to stdout in `server.js`; stdout carries MCP protocol messages.
 - Do not close the shared `localToolsClient` from routes. Close it only during backend shutdown.
 - For high-volume, multi-host, or externally exposed deployments, move shared MCP capabilities to an authenticated network transport such as Streamable HTTP instead of relying on a local stdio child process.
 

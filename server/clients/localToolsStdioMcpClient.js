@@ -2,7 +2,7 @@
 //
 // MCP stdio client for a local-only MCP server.
 //
-// This client starts stdio-mcp-server.js as a child process through the
+// This client starts server.js as a child process through the
 // official @modelcontextprotocol/sdk transport. Use this when the MCP server
 // runs on the same machine/container as this Node.js application.
 //
@@ -20,7 +20,7 @@ export class LocalToolsStdioMcpClient {
   constructor({
     command = process.execPath,
     args = [
-      path.join(__dirname, "..", "stdio_mcp", "stdio-mcp-server.js"),
+      path.join(__dirname, "..", "stdio_mcp", "server.js"),
     ],
     cwd = process.cwd(),
     env = process.env,

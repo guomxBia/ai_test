@@ -12,7 +12,7 @@ import {
     GEMINI_API_URL,
     GEMINI_PRO_MODEL,
     ollamaAIcallFromBrowser,
-    geminiAIcallFromBrowserByMcpTool,
+    geminiAIcallFromBrowserByToolCall ,
 } from './aiApiUtils';
 
 // --- RE-EXPORTED CONSTANTS (defined in aiApiUtils.js, re-exported here for convenience) ---
@@ -38,13 +38,13 @@ export const AI_QUERY_GENERATORS = {
     niogems_gemini: {
         name: 'Niogems Wells Query (Gemini Tools)',
         model: GEMINI_PRO_MODEL,
-        generator: (prompt) => geminiAIcallFromBrowserByMcpTool(prompt, GEMINI_PRO_MODEL, [NIOGEMS_TOOL_DEFINITION]),
+        generator: (prompt) => geminiAIcallFromBrowserByToolCall (prompt, GEMINI_PRO_MODEL, [NIOGEMS_TOOL_DEFINITION]),
         baseURL: 'https://localhost:9443/NiogemsServer/v1/wells',
     },
     usgs_gemini: {
         name: 'USGS Turbines Query (Gemini Tools)',
         model: GEMINI_PRO_MODEL,
-        generator: (prompt) => geminiAIcallFromBrowserByMcpTool(prompt, GEMINI_PRO_MODEL, [USGS_TOOL_DEFINITION]),
+        generator: (prompt) => geminiAIcallFromBrowserByToolCall (prompt, GEMINI_PRO_MODEL, [USGS_TOOL_DEFINITION]),
         baseURL: 'https://energy.usgs.gov/api/uswtdb/v1/turbines',
     },
 };

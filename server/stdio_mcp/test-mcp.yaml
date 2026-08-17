@@ -22,7 +22,7 @@ mcpServers:
   - name: local-gis-tools
     command: node
     args:
-      - ./stdio-mcp-server.js
+      - ./server.js
 
   # Remote HTTP/SSE MCP server — ArcGIS feature layers
   # (power plants, NPS parks, BIA offices). Runs on HTTP_MCP_BASE_URL
