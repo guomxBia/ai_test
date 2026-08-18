@@ -22,13 +22,13 @@ import {
  * import { tools as usgsTools } from "./modules/usgs/index.js";
  * import { tools as censusTools } from "./modules/census/index.js";
  *
- * const allTools = [
+ * const registeredTools  = [
  *   ...arcgisTools,
  *   ...usgsTools,
  *   ...censusTools,
  * ];
  */
-const allTools = [
+const registeredTools  = [
   ...arcgisTools,
 ];
 
@@ -39,7 +39,7 @@ const allTools = [
  */
 const toolByName = new Map();
 
-for (const tool of allTools) {
+for (const tool of registeredTools ) {
   if (!tool?.name) {
     throw new Error(
       "Every MCP tool must have a name."
@@ -67,7 +67,7 @@ for (const tool of allTools) {
  * handler is intentionally NOT exposed to the MCP client.
  */
 export function getToolDefinitions() {
-  return allTools.map((tool) => ({
+  return registeredTools .map((tool) => ({
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,

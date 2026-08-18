@@ -198,26 +198,16 @@ export function createMcpRouter() {
     /**
      * Create an MCP protocol server for this client connection.
      */
-    const mcpServer =
-      createMcpServer();
+    const mcpServer = createMcpServer();
 
     try {
-      await mcpServer.connect(
-        transport
-      );
+      await mcpServer.connect(transport);
     } catch (error) {
-      activeTransports.delete(
-        transport.sessionId
-      );
+      activeTransports.delete( transport.sessionId );
 
-      console.error(
-        "[mcp] Failed to connect SSE transport:",
-        error
-      );
+      console.error("[mcp] Failed to connect SSE transport:",error);
 
-      if (!res.headersSent) {
-        res.status(500).end();
-      }
+      if (!res.headersSent) {  res.status(500).end();   }
     }
   });
 
@@ -227,16 +217,11 @@ export function createMcpRouter() {
   router.post(
     "/messages",
     async (req, res) => {
-      const sessionId =
-        req.query.sessionId;
+      const sessionId = req.query.sessionId;
 
-      if (
-        typeof sessionId !== "string" ||
-        !sessionId
-      ) {
+      if (typeof sessionId !== "string" || !sessionId ) {
         return res.status(400).json({
-          error:
-            "Missing MCP sessionId.",
+          error:"Missing MCP sessionId.",
         });
       }
 

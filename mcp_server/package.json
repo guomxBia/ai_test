@@ -6,8 +6,8 @@
   "main": "http-mcp-server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch http-mcp-server.js",
-    "start": "node http-mcp-server.js"
+    "dev": "node --watch http-server.js",
+    "start": "node http-server.js"
   },
   "keywords": [],
   "author": "",
