@@ -19,7 +19,7 @@ The system has four main pieces:
 
 1. **Frontend (`client/`)** — ArcGIS map and chat UI
 2. **Backend / Agent Host (`server/`)** — Express API, ADK agents, agent selection, local SQLite access, and local MCP client
-3. **Remote MCP Server (`mcp_server/`)** — ArcGIS feature-layer tools exposed over HTTP/SSE
+3. **Remote MCP Server (`server_mcp/`)** — ArcGIS feature-layer tools exposed over HTTP/SSE
 4. **Local MCP Server (`server/stdio_mcp/`)** — local-only file and SQLite tools exposed over stdio
 
 ```text
@@ -38,7 +38,7 @@ Local stdio MCP client          Remote HTTP/SSE MCP client
 spawns local child process      connects to localhost:6060
         |                             |
         v                             v
-server/stdio_mcp/              mcp_server/
+server/stdio_mcp/              server_mcp/
 local files + SQLite           ArcGIS feature layers
 ```
 
@@ -61,7 +61,7 @@ server/
   db/                 # SQLite wells helper
   stdio_mcp/          # Local-only stdio MCP server and tests
 
-mcp_server/
+server_mcp/
   http-mcp-server.js  # Remote ArcGIS MCP server over HTTP/SSE
   arcgis/             # ArcGIS tool registration and implementations
   tests/              # HTTP/SSE MCP smoke-test client and scripts
@@ -89,7 +89,7 @@ The **combined** agent is the main demonstration: one Gemini-driven `LlmAgent` c
 
 ## Remote ArcGIS MCP Server
 
-`mcp_server/http-mcp-server.js` runs an Express-based MCP server over HTTP/SSE. It is not a set of ordinary REST GET endpoints.
+`server_mcp/http-mcp-server.js` runs an Express-based MCP server over HTTP/SSE. It is not a set of ordinary REST GET endpoints.
 
 The remote server exposes:
 
@@ -114,7 +114,7 @@ Each tool builds a SQL-style `WHERE` clause, calls the relevant ArcGIS REST `/qu
 }
 ```
 
-Feature-layer URLs are configured in `mcp_server/config.js`:
+Feature-layer URLs are configured in `server_mcp/config.js`:
 
 - `POWER_PLANTS_URL`
 - `NPS_PARKS_URL`
@@ -124,7 +124,7 @@ The remote MCP server defaults to `http://localhost:6060`. The backend refers to
 
 ### Remote MCP tests
 
-`mcp_server/tests/` includes:
+`server_mcp/tests/` includes:
 
 - `FederalGisHttpMcpClient.js` — test-only HTTP/SSE client wrapper
 - A smoke-test script such as `gis-mcp-client.js` or `mcp-smoke-test.js`
@@ -272,7 +272,7 @@ User prompt
 ### 1. Start the remote ArcGIS MCP server
 
 ```bash
-cd mcp_server
+cd server_mcp
 npm install
 node http-mcp-server.js
 ```
@@ -343,7 +343,7 @@ cd server/stdio_mcp
 Test the remote HTTP/SSE MCP server:
 
 ```bash
-cd mcp_server/tests
+cd server_mcp/tests
 node gis-mcp-client.js
 ```
 
@@ -361,18 +361,18 @@ From the repository root:
 ./startDev.ps1
 ```
 
-`startDev.ps1` opens three tabs—`client`, `server`, and `mcp_server`—and runs `npm run dev` in each project.
+`startDev.ps1` opens three tabs—`client`, `server`, and `server_mcp`—and runs `npm run dev` in each project.
 
 ## Configuration Notes
 
 - `server/config.js` contains the backend `PORT`, `ACTIVE_CLIENT`, `HTTP_MCP_BASE_URL`, and related configuration.
-- `mcp_server/config.js` contains the remote MCP server port and ArcGIS feature-layer URLs.
+- `server_mcp/config.js` contains the remote MCP server port and ArcGIS feature-layer URLs.
 - `client/config.js` contains the frontend `API_BASE_URL`.
 - The default/fallback agent for an unrecognized `ACTIVE_CLIENT` value is `agents/sapMockAgent.js`, which is useful when developing the UI without either MCP server.
 
 ## Development Notes
 
-- `mcp_server/package.json`
+- `server_mcp/package.json`
   - `npm run dev` uses `node --watch http-mcp-server.js`
   - `npm start` uses `node http-mcp-server.js`
 - Do not write normal logs to stdout in `server.js`; stdout carries MCP protocol messages.
