@@ -5,7 +5,7 @@ schema: v1
 models:
   # 1A. Main Model (for Chat, Edit, and Agent Mode)
   - name: Autodetect
-    provider: ollama
+    provider: mock
     model: AUTODETECT
 
 agents:

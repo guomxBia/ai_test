@@ -1,78 +1,75 @@
-// server/llm/geminiClient.js
-//
-// Gemini function-calling utility.
-//
-// Responsibilities:
-// - Send a prompt plus function declarations to Gemini.
-// - Return whichever tool call Gemini chose (name + args), or
-//   plain text if Gemini did not choose a tool.
-//
-// This module does not know about MCP or HTTP routes.
+import {
+  assertAllowedGeminiModel,
+  assertGeminiConfigured,
+  config,
+} from "../config.js";
+import { GEMINI_TOOL_ROUTER_SYSTEM_INSTRUCTION } from "../prompts/geminiPrompts.js";
 
-import { GEMINI_API_URL, GEMINI_PRO_MODEL } from "../config.js";
+export async function geminiGenerateToolCall({ prompt, functionDeclarations, model }) {
+  assertGeminiConfigured();
 
-/**
- * MCP tool inputSchemas use standard lowercase JSON Schema.
- * Gemini's function-calling schema expects uppercase type enums
- * and doesn't support `additionalProperties`.
- */
-function toGeminiSchema(schema) {
-  if (!schema || typeof schema !== "object") return schema;
+  const modelToUse = model || config.gemini.defaultModel;
+  assertAllowedGeminiModel(modelToUse);
 
-  const { additionalProperties, ...rest } = schema;
-  const converted = { ...rest };
+  const url = new URL(
+    `models/${encodeURIComponent(modelToUse)}:generateContent`,
+    `${config.gemini.baseUrl.replace(/\/$/, "")}/`
+  );
+  url.searchParams.set("key", config.gemini.apiKey);
 
-  if (typeof converted.type === "string") {
-    converted.type = converted.type.toUpperCase();
-  }
-
-  if (converted.properties) {
-    converted.properties = Object.fromEntries(
-      Object.entries(converted.properties).map(([key, value]) => [key, toGeminiSchema(value)])
-    );
-  }
-
-  if (converted.items) {
-    converted.items = toGeminiSchema(converted.items);
-  }
-
-  return converted;
-}
-
-export function mcpToolsToGeminiDeclarations(mcpTools) {
-  return mcpTools.map((tool) => ({
-    name: tool.name,
-    description: tool.description,
-    parameters: toGeminiSchema(tool.inputSchema),
-  }));
-}
-
-export async function geminiGenerateToolCall(prompt, functionDeclarations) {
-  const requestPayload = {
-    model: GEMINI_PRO_MODEL,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+  const payload = {
+    systemInstruction: {
+      parts: [{ text: GEMINI_TOOL_ROUTER_SYSTEM_INSTRUCTION }],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }],
+      },
+    ],
     tools: [{ functionDeclarations }],
   };
 
-  const response = await fetch(GEMINI_API_URL, {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestPayload),
+    body: JSON.stringify(payload),
   });
 
+  const data = await response.json().catch(() => null);
+
   if (!response.ok) {
-    throw new Error(`Gemini request failed: HTTP ${response.status}`);
+    const message =
+      data?.error?.message ?? `Gemini request failed: HTTP ${response.status}`;
+    throw new Error(message);
   }
 
-  const data = await response.json();
-  const candidate = data.candidates?.[0];
-  const part = candidate?.content?.parts?.[0];
+  const candidate = data?.candidates?.[0];
+  const parts = candidate?.content?.parts ?? [];
+  const functionPart = parts.find((part) => part.functionCall);
 
-  if (part?.functionCall) {
-    const { name, args } = part.functionCall;
+  if (functionPart?.functionCall) {
+    const { name, args = {} } = functionPart.functionCall;
     console.log(`[gemini] chose tool "${name}" with args:`, args);
-    return { type: "tool_call", name, args };
+
+    return {
+      type: "tool_call",
+      name,
+      args,
+      source: "gemini",
+      model: modelToUse,
+    };
   }
 
-  return { type: "text", text: part?.text?.trim() ?? "" };
+  const text = parts
+    .map((part) => part.text ?? "")
+    .join("")
+    .trim();
+
+  return {
+    type: "text",
+    text,
+    source: "gemini",
+    model: modelToUse,
+  };
 }

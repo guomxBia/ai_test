@@ -1,8 +1,8 @@
 // src/components/NoAgentQueryPanel.jsx
 //
 // Panel for the no-agent test page. Matches server/routes/queryRoutes.js
-// exactly: provider select (gemini/ollama), target select (required only
-// for ollama), a prompt field, and a structured result (tool name + args
+// exactly: provider select (gemini/mock), target select (required only
+// for mock), a prompt field, and a structured result (tool name + args
 // + record list), NOT a chat transcript.
 
 import { useActionState, useRef, useState } from "react";
@@ -113,11 +113,11 @@ export default function NoAgentQueryPanel({ title, onLocationUpdate, onClear }) 
               disabled={isPending}
             >
               <option value="gemini">Gemini (tool-calling)</option>
-              <option value="ollama">Ollama (text prompt)</option>
+              <option value="mock">Ollama (text prompt)</option>
             </select>
           </div>
 
-          {provider === "ollama" && (
+          {provider === "mock" && (
             <div className="field">
               <label htmlFor="target">Target API</label>
               <select

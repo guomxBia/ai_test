@@ -1,9 +1,9 @@
 it only knows about two tools — query_niogems_wells and query_usgs_turbines — and has no file-system or clock tools at all, so prompts like "what time is it" won't have anywhere to go on that server.
-Here's a test set structured around what queryRoutes.js actually does, split by the two things you need to verify: Gemini's own tool-picking and Ollama's explicit target + text-parsing path.
+Here's a test set structured around what queryRoutes.js actually does, split by the two things you need to verify: Gemini's own tool-picking and mock's explicit target + text-parsing path.
 Gemini (provider: "gemini") — model picks the tool itself
 No target needed; this tests whether Gemini correctly distinguishes Niogems vs. USGS from the prompt alone.
 PromptExpected toolWhat it tests"Show me wells operated by Enbridge"query_niogems_wellsBasic operator filter"Find active wells in the Lake Enaton field"query_niogems_wellsCombines status + fieldName"Show me well number 42-A"query_niogems_wellswellNumber filter"Find wind turbines in Iowa made by Vestas"query_usgs_turbinest_state + t_manu together"Show turbines with capacity greater than 2000 kW"query_usgs_turbinesTests cap_operator: "gt" — verifies the LLM picks the right comparison operator"List turbines built before 2010, sorted by year"query_usgs_turbinesTests sort_order construction (e.g. p_year.asc)"Show me the second page of wells, 5 per page"query_niogems_wellsTests page/pageSize extraction from natural language"What's the capital of France?"(no tool — type: "text")Confirms Gemini declines gracefully when neither tool applies — checks your payload.type === "text" branch in the UI actually renders
-Ollama (provider: "ollama", target required)
+mock (provider: "mock", target required)
 These test the URL-shaped text output → parseNiogemsPath/parseUsgsQuery → tool-args round trip, which is the fragile part of that path.
 target: "niogems"
 

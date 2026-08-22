@@ -6,7 +6,7 @@
 // body: { prompt, provider: "ollama" | "gemini", target?: "niogems" | "usgs" }
 //
 // Response shapes:
-//   ollama         -> { provider, target, toolName, args, data }
+//   mock         -> { provider, target, toolName, args, data }
 //   gemini + tool  -> { provider, type: "tool_call", toolName, args, data }
 //   gemini + text  -> { provider, type: "text", text }
 //
@@ -14,7 +14,7 @@ import { NO_AGENT_SERVER_URL } from "../config.js";
 
 export async function queryNoAgentServer({ prompt, provider, target }) {
   const body = { prompt, provider };
-  if (provider === "ollama") {
+  if (provider === "mock") {
     body.target = target;
   }
 
