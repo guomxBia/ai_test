@@ -1,0 +1,22 @@
+{
+  "name": "rag-server-raw-modules",
+  "version": "1.0.0",
+  "description": "RAG server built by wiring Express, the ChromaDB JS client, Transformers.js, and the OpenAI/Gemini SDKs directly (no orchestration framework)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "chromadb": "^3.0.0",
+    "@huggingface/transformers": "^4.2.0",
+    "openai": "^7.5.0",
+    "@google/genai": "^2.17.0",
+    "dotenv": "^16.4.5"
+  }
+}
