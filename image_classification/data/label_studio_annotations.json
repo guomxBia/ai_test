@@ -1,0 +1,141 @@
+[
+  {
+    "data": {
+      "image": "four_classes.jpg"
+    },
+    "annotations": [
+      {
+        "result": [
+          {
+            "id": "region_1",
+            "type": "polygonlabels",
+            "from_name": "label",
+            "to_name": "image",
+            "original_width": 640,
+            "original_height": 480,
+            "image_rotation": 0,
+            "value": {
+              "points": [
+                [
+                  0.0,
+                  0.0
+                ],
+                [
+                  45.46875,
+                  0.0
+                ],
+                [
+                  45.46875,
+                  99.79166666666667
+                ],
+                [
+                  0.0,
+                  99.79166666666667
+                ]
+              ],
+              "polygonlabels": [
+                "Crop_Field_Left"
+              ]
+            }
+          },
+          {
+            "id": "region_2",
+            "type": "polygonlabels",
+            "from_name": "label",
+            "to_name": "image",
+            "original_width": 640,
+            "original_height": 480,
+            "image_rotation": 0,
+            "value": {
+              "points": [
+                [
+                  45.625,
+                  0.0
+                ],
+                [
+                  65.3125,
+                  0.0
+                ],
+                [
+                  65.3125,
+                  99.79166666666667
+                ],
+                [
+                  45.625,
+                  99.79166666666667
+                ]
+              ],
+              "polygonlabels": [
+                "Green_Field"
+              ]
+            }
+          },
+          {
+            "id": "region_3",
+            "type": "polygonlabels",
+            "from_name": "label",
+            "to_name": "image",
+            "original_width": 640,
+            "original_height": 480,
+            "image_rotation": 0,
+            "value": {
+              "points": [
+                [
+                  65.46875,
+                  0.0
+                ],
+                [
+                  72.34375,
+                  0.0
+                ],
+                [
+                  72.34375,
+                  99.79166666666667
+                ],
+                [
+                  65.46875,
+                  99.79166666666667
+                ]
+              ],
+              "polygonlabels": [
+                "Road"
+              ]
+            }
+          },
+          {
+            "id": "region_4",
+            "type": "polygonlabels",
+            "from_name": "label",
+            "to_name": "image",
+            "original_width": 640,
+            "original_height": 480,
+            "image_rotation": 0,
+            "value": {
+              "points": [
+                [
+                  72.5,
+                  0.0
+                ],
+                [
+                  99.84375,
+                  0.0
+                ],
+                [
+                  99.84375,
+                  99.79166666666667
+                ],
+                [
+                  72.5,
+                  99.79166666666667
+                ]
+              ],
+              "polygonlabels": [
+                "Crop_Field_Right"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

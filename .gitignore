@@ -1,6 +1,15 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+.venv/
+env/
+venv/
+ENV/
+
+# Python caching
+**/__pycache__/
+*.py[cod]
+*$py.class
 
 # Environment variables (Crucial: never commit API keys!)
 .env
@@ -12,6 +21,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs/
+*.log
 
 # Production / Build outputs
 dist/
@@ -31,3 +41,10 @@ out/
 .DS_Store
 Thumbs.db
 server_vercel/models
+
+# Large ML Weights (Excludes the 160MB file from Git tracking)
+image_classification/*.pth
+image_classification/model_weights.pth
+*.pth
+*.onnx
+*.h5

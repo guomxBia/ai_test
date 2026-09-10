@@ -1,0 +1,4 @@
+0: Crop_Field_Left
+1: Green_Field
+2: Road
+3: Crop_Field_Right

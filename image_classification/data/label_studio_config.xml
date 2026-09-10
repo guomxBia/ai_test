@@ -1,0 +1,9 @@
+<View>
+  <Image name="image" value="$image"/>
+  <PolygonLabels name="label" toName="image">
+    <Label value="Crop_Field_Left"/>
+    <Label value="Green_Field"/>
+    <Label value="Road"/>
+    <Label value="Crop_Field_Right"/>
+  </PolygonLabels>
+</View>
