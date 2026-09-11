@@ -11,6 +11,7 @@ STRIDE = 64
 EPOCHS = 30
 LR = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+PRETRAINED = True  # set True/False to switch
 
 class PatchDataset(Dataset):
     def __init__(self, image_patches, mask_patches):
@@ -24,7 +25,8 @@ class PatchDataset(Dataset):
         return image_mask_to_tensors(self.image_patches[idx], self.mask_patches[idx])
 
 def build_model(num_classes=NUM_CLASSES):
-    model = models.segmentation.deeplabv3_resnet50(weights="DEFAULT")
+    model = models.segmentation.deeplabv3_resnet50(weights="DEFAULT" if PRETRAINED else None)
+
     model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
     if model.aux_classifier is not None:
         model.aux_classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
@@ -54,7 +56,8 @@ def main():
             total_loss += loss.item()
         print(f"Epoch {epoch+1}/{EPOCHS} - loss: {total_loss/len(loader):.4f}")
 
-    torch.save(model.state_dict(), "model_weights.pth")
+    #torch.save(model.state_dict(), "model_weights.pth")
+    torch.save(model.state_dict(), "model_weights_pretrained.pth" if PRETRAINED else "model_weights_scratch.pth")
     print("Saved model_weights.pth")
 
 if __name__ == "__main__":
