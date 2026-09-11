@@ -9,7 +9,7 @@ def main():
     img_t = img_t.unsqueeze(0).to(DEVICE)
 
     model = build_model(NUM_CLASSES).to(DEVICE)
-    model.load_state_dict(torch.load("model_weights.pth", map_location=DEVICE))
+    model.load_state_dict(torch.load("model_weights_pretrained.pth", map_location=DEVICE))
     model.eval()
 
     with torch.no_grad():

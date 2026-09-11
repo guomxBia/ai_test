@@ -37,7 +37,10 @@ def main():
     image_patches, mask_patches = extract_patches(image_np, mask_np, PATCH_SIZE, STRIDE)
     print(f"Extracted {len(image_patches)} patches")
 
-    loader = DataLoader(PatchDataset(image_patches, mask_patches), batch_size=4, shuffle=True)
+    loader = DataLoader(PatchDataset(image_patches, mask_patches), batch_size=4, shuffle=True,
+    pin_memory=True  # keep this
+    # num_workers=2 #skip num_workers for now — dataset is tiny and pre-loaded
+    )
 
     model = build_model().to(DEVICE)
     model.train()
