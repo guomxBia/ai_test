@@ -1,113 +1,150 @@
-# Training Strategies for ResNet-50 / DeepLabV3
+# Deep Learning Model Fine-Tuning Strategies
 
-This document summarizes three approaches for fine-tuning the model, along with their trade-offs in performance, memory, and saved file size.
-
----
-
-## 1. Full Fine-Tuning
-
-Train **all** layers of the model, including the backbone and the classifier head.
-
-```python
-model = deeplabv3_resnet50(pretrained=True)
-# All parameters remain trainable by default
-```
-
-**Save the full model:**
-```python
-torch.save(model.state_dict(), "full_model.pth")  # ~160 MB
-```
-
-**Load for inference:**
-```python
-model = deeplabv3_resnet50(pretrained=False)
-model.load_state_dict(torch.load("full_model.pth"))
-```
-
-**Best for:** Custom imagery that differs significantly from ImageNet (e.g., aerial/satellite, multi-spectral, medical scans).
+A practical guide comparing three distinct fine-tuning paradigms for deep vision backbones (e.g., ResNet-50 / DeepLabV3): **Full Fine-Tuning**, **LoRA (Low-Rank Adaptation)**, and **Backbone Freezing (Head-Only Training)**.
 
 ---
 
-## 2. LoRA (Low-Rank Adaptation)
+## Overview of Strategies
 
-Freeze the entire base model and inject small trainable adapter matrices into selected layers. Only the adapters are trained and saved.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                          Training Strategies                           │
+├─────────────────────────┬──────────────────────────┬───────────────────┤
+│ 1. Full Fine-Tuning     │ 2. LoRA Adaptation       │ 3. Freeze Backbone│
+│ (All Layers Trainable)  │ (Frozen Base + Adapters) │ (Head-Only Tuning)│
+│                         │                          │                   │
+│  [ Backbone ] (Train)   │  [ Backbone ] (Frozen)   │ [Backbone](Frozen)│
+│       ↓                 │     + [ΔW LoRA] (Train)  │       ↓           │
+│  [Classifier] (Train)   │  [Classifier] (Train)    │ [Classifier](Train│
+│                         │                          │                   │
+│ Weight Checkpoint:      │ Weight Checkpoint:       │ Weight Checkpoint:│
+│ ~160 MB (full model)    │ ~2–10 MB (adapter delta) │ ~5–10 MB (head)   │
+└─────────────────────────┴──────────────────────────┴───────────────────┘
+```
+
+---
+
+## 1. Full Fine-Tuning (End-to-End)
+
+In full fine-tuning, every parameter in the network — both the feature extraction backbone and the classification head — remains trainable. Gradients and optimizer states are maintained across the entire network architecture.
+
+### Key Characteristics
+
+- **Adaptability**: High. Low-level convolutional filters (edges, textures, spatial features) and high-level semantic representations both adapt to target data.
+- **Domain Fit**: Essential when working with target data that differs drastically from standard ImageNet distributions (e.g., satellite/aerial imagery, medical CT/MRI scans, multispectral data).
+- **Storage Footprint**: Full model checkpoint must be stored (e.g., ~160 MB for ResNet-50 / DeepLabV3).
+
+### Trade-offs
+
+- ✅ **Pros**: Highest theoretical upper bound on accuracy for out-of-domain datasets.
+- ❌ **Cons**: High GPU memory consumption; slower training throughput; prone to overfitting on small datasets; requires storing large artifacts per checkpoint.
+
+---
+
+## 2. Low-Rank Adaptation (LoRA)
+
+LoRA freezes pre-trained backbone weights and injects trainable rank-decomposition matrices into targeted layers (e.g., attention projections or convolution kernels). Only these auxiliary matrices are optimized during training.
+
+### Key Characteristics
+
+- **Adaptability**: Strong adaptation across deep intermediate layers without modifying base weights.
+- **Domain Fit**: Robust for fine-tuning on specialized datasets while preserving pre-trained representations.
+- **Storage Footprint**: Minimal delta weight checkpoints (~2 MB to 10 MB).
+
+### Core Formula
+
+```
+W = W₀ + ΔW = W₀ + B·A,  where A ∈ ℝ^(r×k), B ∈ ℝ^(d×r), r ≪ min(d, k)
+```
+
+### Workflow Example (Hugging Face PEFT / Custom)
 
 ```python
 from peft import LoraConfig, get_peft_model
 
-base_model = deeplabv3_resnet50(pretrained=True)
-for param in base_model.parameters():
-    param.requires_grad = False
-
-lora_config = LoraConfig(
-    r=8,                    # rank of the adapter matrices
+# 1. Define LoRA configuration
+config = LoraConfig(
+    r=8,
     lora_alpha=16,
-    target_modules=["conv1", "layer4"],  # example target layers
-    lora_dropout=0.1,
+    target_modules=["conv2", "fc"],
+    lora_dropout=0.05,
+    bias="none",
 )
-model = get_peft_model(base_model, lora_config)
-```
 
-**Save only the adapter weights:**
-```python
-model.save_pretrained("lora_adapter")  # ~2–10 MB
-```
+# 2. Wrap existing base model
+lora_model = get_peft_model(base_model, config)
 
-**Load for inference:**
-```python
-base_model = deeplabv3_resnet50(pretrained=True)
-model = PeftModel.from_pretrained(base_model, "lora_adapter")
+# 3. Save only adapter weights (~5 MB)
+lora_model.save_pretrained("./lora_adapters")
 ```
-
-**Best for:** Storage-constrained deployment, multiple task-specific adapters sharing one frozen base model, rapid experimentation.
 
 ---
 
-## 3. Freeze the Backbone (Head-Only Training)
+## 3. Backbone Freezing (Head-Only Training)
 
-Freeze the ResNet-50 backbone and train only the classifier head. Reduces training memory; final file size only shrinks if you deliberately save just the head.
+The feature extraction backbone is locked (`requires_grad = False`). Gradients are computed and backpropagated strictly through the task-specific classification head.
+
+### Key Characteristics
+
+- **Adaptability**: None for feature extraction; representations remain fixed to pre-trained weights.
+- **Domain Fit**: Ideal when downstream images visually align with pre-training distributions (e.g., natural photography, common objects, vehicle datasets).
+- **Memory & Speed**: Up to 50–70% reduction in training VRAM since intermediate activations do not need backward caching.
+
+### Workflow Example (PyTorch)
 
 ```python
-model = deeplabv3_resnet50(pretrained=True)
+import torch
+
+# 1. Freeze backbone parameters
 for param in model.backbone.parameters():
     param.requires_grad = False
-# model.classifier remains trainable
+
+# 2. Train only classifier head
+# ... standard training loop ...
+
+# 3. Save ONLY classifier state dictionary (~5-10 MB)
+torch.save(model.classifier.state_dict(), "classifier_only.pth")
 ```
 
-**Save only the classifier head:**
-```python
-torch.save(model.classifier.state_dict(), "classifier_only.pth")  # ~5–10 MB
-```
+### Loading for Inference
 
-**Load for inference:**
 ```python
-model = deeplabv3_resnet50(pretrained=True)  # load base first
+# Initialize base architecture
+model = load_base_model()  # 160 MB base weights
+
+# Load custom trained head
 model.classifier.load_state_dict(torch.load("classifier_only.pth"))
+model.eval()
 ```
 
-> ⚠️ Note: If you call `torch.save(model.state_dict(), ...)` without isolating the classifier, it still writes the full ~160 MB, since `state_dict()` includes frozen (non-trainable) parameters too. Freezing affects *what gets gradients*, not *what gets saved* — you must explicitly save a sub-module to shrink the file.
-
-**Best for:** Target objects visually similar to ImageNet classes (e.g., common pets, everyday road objects); fast iteration with limited GPU memory.
-
 ---
 
-## Comparison Table
+## Strategy Comparison Matrix
 
-| Feature / Aspect | Full Fine-Tuning | LoRA | Freeze Backbone |
+| Feature / Metric | Full Fine-Tuning | Backbone Freezing | LoRA Adaptation |
 |---|---|---|---|
-| **Feature Adaptation** | High — low-level features (edges, textures, spectral patterns) adapt to target domain | Moderate — small adapters let the model shift behavior without touching frozen weights | None — backbone stays rigid, using generic ImageNet features |
-| **Domain Shift Fitness** | Superior for custom imagery (aerial, satellite, multi-spectral, medical) | Good middle ground — can adapt meaningfully with far fewer parameters | Moderate — best when target data resembles ImageNet photos |
-| **GPU VRAM Usage** | Highest — activations & gradients stored for all 50 layers | Low — gradients only for small adapter matrices | Low (50–70% lower) — gradients only for classifier head |
-| **Training Speed** | Slowest per epoch | Fast | Fastest per epoch |
-| **Risk of Overfitting** | Higher on small datasets (many trainable params) | Low — very few trainable params | Low — only a few thousand trainable params |
-| **Saved Model File Size** | ~160 MB | ~2–10 MB (adapter only) | ~5–10 MB (if saving classifier only; full state_dict still ~160 MB) |
-| **Inference Setup** | Load single file directly | Load base model + apply adapter | Load base model + load head weights into `model.classifier` |
-| **Best Use Case** | Large domain gap, sufficient data/compute | Multiple lightweight task variants, storage-constrained deployment | Quick iteration, target domain close to ImageNet, limited GPU memory |
+| **Feature Extraction Adaptation** | High (all layers learn domain features) | None (frozen to pre-trained weights) | Medium–High (adapts low-rank deltas) |
+| **Domain Shift Resilience** | Superior (ideal for aerial, medical, IR) | Moderate (relies on pre-trained distribution) | High (adapts features with minimal drift) |
+| **GPU VRAM Consumption** | High (gradients & states for all layers) | Very Low (50–70% reduction) | Low (modest gradient memory overhead) |
+| **Training Speed** | Baseline / Slower | Significantly Faster | Fast (comparable to head-only) |
+| **Overfitting Risk** | High on small sample sizes | Minimal (few trainable parameters) | Low (constrained rank parameterization) |
+| **Saved Artifact Size** | Full model checkpoint (~160 MB) | Head checkpoint (~5–10 MB) | Adapter delta (~2–10 MB) |
+| **Inference Serving** | Direct single-model load | Load base + inject head weights | Load base + merge adapter weights |
 
 ---
 
-## Quick Decision Guide
+## Decision Framework
 
-- **Data very different from ImageNet + have compute →** Full Fine-Tuning
-- **Need tiny, swappable, storage-efficient weights →** LoRA
-- **Data similar to ImageNet + want fast/cheap training →** Freeze Backbone (head-only)
+Use the following guidelines to select the appropriate training mode:
+
+1. **Choose Full Fine-Tuning if:**
+   - Your imagery has high domain divergence from standard pre-training sets (e.g., satellite, multispectral, microscopic).
+   - Sufficient training data and GPU VRAM are available to prevent catastrophic forgetting and overfitting.
+
+2. **Choose Backbone Freezing if:**
+   - Training resources (VRAM and compute time) are heavily constrained.
+   - Target classes are standard objects visually consistent with the pre-trained domain.
+
+3. **Choose LoRA Adaptation if:**
+   - You need strong domain adaptation with minimal storage overhead.
+   - You want to maintain multiple lightweight, swappable task-specific adapters over a single shared frozen base model.
